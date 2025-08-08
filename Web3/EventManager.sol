@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "./IEventContract.sol";
 import "./IEventManager.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/access/Ownable.sol";
 
 /**
  * @title EventManager
@@ -83,7 +83,16 @@ contract EventManager is Ownable, IEventManager {
         require(address(this).balance == 0, "Cannot mint with pending balance");
 
         IEventContract chain = IEventContract(eventChainContract);
-        chain.safeMint(to, uri, eventRegistry[eventId].name, eventRegistry[eventId].ticketPrice, endDate);
+        // default royalty 100 bps = 1%
+        chain.safeMintWithRoyalty(
+            to,
+            uri,
+            eventRegistry[eventId].name,
+            eventRegistry[eventId].ticketPrice,
+            endDate,
+            msg.sender,
+            100
+        );
     }
 
     /**
@@ -99,3 +108,4 @@ contract EventManager is Ownable, IEventManager {
         emit EventTransferred(eventId, msg.sender, to);
     }
 }
+//0xE37e93Dadb4e72b89885A1fDC85ec1ae527e73eE

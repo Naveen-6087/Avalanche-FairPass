@@ -5,9 +5,10 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/access/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/token/common/ERC2981.sol";
 import "./IEventContract.sol";
 
-contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, Ownable, IEventContract {
+contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, ERC2981, Ownable, IEventContract {
     uint256 private ticketIdCounter;
 
     struct TicketInfo {
@@ -45,6 +46,37 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, Ownable, IEv
         emit TicketMinted(newTicketId, to, eventDetails, originalPrice, expirationDate);
     }
 
+    function safeMintWithRoyalty(
+        address to,
+        string memory uri,
+        string memory eventDetails,
+        uint256 originalPrice,
+        uint256 expirationDate,
+        address royaltyReceiver,
+        uint96 royaltyBps
+    ) external override {
+        uint256 newTicketId = ticketIdCounter++;
+        _safeMint(to, newTicketId);
+        _setTokenURI(newTicketId, uri);
+
+        address[] memory owners = new address[](1);
+        owners[0] = to;
+
+        ticketRecords[newTicketId] = TicketInfo({
+            eventInfo: eventDetails,
+            basePrice: originalPrice,
+            expiryTimestamp: uint64(expirationDate),
+            pastOwners: owners,
+            usedStatus: false
+        });
+
+        if (royaltyReceiver != address(0) && royaltyBps > 0) {
+            _setTokenRoyalty(newTicketId, royaltyReceiver, royaltyBps);
+        }
+
+        emit TicketMinted(newTicketId, to, eventDetails, originalPrice, expirationDate);
+    }
+
     function validateTicket(uint256 ticketId) public override {
         require(ownerOf(ticketId) == msg.sender, "Not authorized");
         require(!ticketRecords[ticketId].usedStatus, "Ticket already used");
@@ -56,6 +88,13 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, Ownable, IEv
     function getTicketHistory(uint256 ticketId) public view override returns (address[] memory) {
         require(_exists(ticketId), "Nonexistent ticket");
         return ticketRecords[ticketId].pastOwners;
+    }
+
+    function getTicketStatus(uint256 ticketId) public view override returns (bool isUsed, bool isValid) {
+        require(_exists(ticketId), "Nonexistent ticket");
+        TicketInfo storage info = ticketRecords[ticketId];
+        bool valid = block.timestamp <= info.expiryTimestamp;
+        return (info.usedStatus, valid);
     }
 
     // Implement the missing interface functions:
@@ -84,6 +123,30 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, Ownable, IEv
         emit TicketExpired(tokenId);
     }
 
+    function safeTransferWithRoyalty(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 salePrice
+    ) external override payable {
+        require(_exists(tokenId), "Nonexistent ticket");
+        require(from != address(0) && to != address(0), "Invalid address");
+        require(from == ownerOf(tokenId), "Not token owner");
+        require(msg.sender == from, "Only owner can transfer");
+
+        (address royaltyReceiver, uint256 royaltyAmount) = royaltyInfo(tokenId, salePrice);
+        require(msg.value == royaltyAmount, "Incorrect royalty");
+
+        if (royaltyAmount > 0) {
+            (bool sent, ) = payable(royaltyReceiver).call{value: royaltyAmount}("");
+            require(sent, "Royalty payment failed");
+        }
+
+        ticketRecords[tokenId].pastOwners.push(to);
+        _transfer(from, to, tokenId);
+        emit TicketTransferred(tokenId, from, to);
+    }
+
     function transferWithHistoryUpdate(
         address from,
         address to,
@@ -109,6 +172,7 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, Ownable, IEv
         super._burn(tokenId);
         delete ticketRecords[tokenId];
         delete resalePriceLimit[tokenId];
+        _resetTokenRoyalty(tokenId);
     }
 
     function tokenURI(uint256 tokenId)
@@ -123,7 +187,7 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, Ownable, IEv
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, ERC721URIStorage)
+        override(ERC721, ERC721URIStorage, ERC2981)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
@@ -137,3 +201,5 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, Ownable, IEv
         revert("Approvals disabled");
     } 
 }
+
+//0x7087374beB22f3021096542F0dF409062522db0b

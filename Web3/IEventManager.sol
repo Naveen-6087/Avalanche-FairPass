@@ -1,12 +1,11 @@
-// SPDX-License-Identifier: UNLICENSED
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 /**
- * @title IEventChainEventManagerContract
- * @dev Interface for EventChainEventManagerContract that manages event creation, ticket minting, and event transfer.
+ * @title IEventManager
+ * @dev Interface for EventManager that manages event creation, ticket minting, and event transfer.
  */
-interface IEventChainEventManagerContract {
+interface IEventManager {
 
     /**
      * @dev Creates a new event with the specified details.
@@ -30,7 +29,7 @@ interface IEventChainEventManagerContract {
      * @param to The address to which the ticket will be minted.
      * @param uri The URI for the ticket metadata.
      */
-    function mintTicket(uint256 eventId, address to, string memory uri,uint256 endDate) external;
+    function mintTicket(uint256 eventId, address to, string memory uri, uint256 endDate) external;
 
     /**
      * @dev Transfers ownership of an event to another organizer.
