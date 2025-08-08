@@ -195,6 +195,16 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, ERC2981, Own
         return super.supportsInterface(interfaceId);
     }
 
+    // Resolve override conflict between ERC2981 and IEventContract
+    function royaltyInfo(uint256 tokenId, uint256 salePrice)
+        public
+        view
+        override(ERC2981, IEventContract)
+        returns (address, uint256)
+    {
+        return super.royaltyInfo(tokenId, salePrice);
+    }
+
     function approve(address to, uint256 tokenId) public override(ERC721, IERC721) {
         revert("Approvals disabled");
     }

@@ -43,8 +43,9 @@ contract Marketplace is Ownable, ReentrancyGuard {
     // Event contract interface
     IEventContract public eventContract;
     
-    constructor(address _eventContract, address _owner) Ownable(_owner) {
+    constructor(address _eventContract, address _owner) {
         require(_eventContract != address(0), "Invalid event contract address");
+        _transferOwnership(_owner);
         eventContract = IEventContract(_eventContract);
     }
     

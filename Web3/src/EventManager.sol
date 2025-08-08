@@ -23,9 +23,8 @@ contract EventManager is Ownable, IEventManager {
      * @param initialOwner The initial owner of the contract.
      * @param eventChainContractAddress The address of the EventChainContract to be used.
      */
-    constructor(address initialOwner, address eventChainContractAddress)
-        Ownable(initialOwner)
-    {
+    constructor(address initialOwner, address eventChainContractAddress) {
+        _transferOwnership(initialOwner);
         eventChainContract = eventChainContractAddress;
     }
 
