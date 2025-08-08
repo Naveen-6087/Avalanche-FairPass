@@ -31,7 +31,7 @@ interface IEventManager {
      * @param endDate The end date for the ticket's validity.
      * @return The address of the ticket holder.
      */
-    function mintTicket(uint256 eventId, address to, string memory uri, uint256 endDate) external returns (address);
+    function mintTicket(uint256 eventId, address to, string memory uri, uint256 endDate) external returns (uint256);
 
     /**
      * @dev Transfers ownership of an event to another organizer.

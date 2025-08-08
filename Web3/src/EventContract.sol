@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/token/ERC721/ERC721.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/access/Ownable.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/token/common/ERC2981.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "./IEventContract.sol";
 
 contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, ERC2981, Ownable, IEventContract {
@@ -27,7 +27,7 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, ERC2981, Own
         _transferOwnership(contractOwner);
     }
 
-    function safeMint(address to, string memory uri, string memory eventDetails, uint256 originalPrice, uint256 expirationDate) external override {
+    function safeMint(address to, string memory uri, string memory eventDetails, uint256 originalPrice, uint256 expirationDate) external override returns (uint256) {
         uint256 newTicketId = ticketIdCounter++;
         _safeMint(to, newTicketId);
         _setTokenURI(newTicketId, uri);
@@ -44,6 +44,7 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, ERC2981, Own
         });
 
         emit TicketMinted(newTicketId, to, eventDetails, originalPrice, expirationDate);
+        return newTicketId;
     }
 
     function safeMintWithRoyalty(
@@ -54,7 +55,7 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, ERC2981, Own
         uint256 expirationDate,
         address royaltyReceiver,
         uint96 royaltyBps
-    ) external override {
+    ) external override returns (uint256) {
         uint256 newTicketId = ticketIdCounter++;
         _safeMint(to, newTicketId);
         _setTokenURI(newTicketId, uri);
@@ -75,6 +76,7 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, ERC2981, Own
         }
 
         emit TicketMinted(newTicketId, to, eventDetails, originalPrice, expirationDate);
+        return newTicketId;
     }
 
     function validateTicket(uint256 ticketId) public override {

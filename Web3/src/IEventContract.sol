@@ -15,7 +15,7 @@ interface IEventContract {
         string memory eventDetails,
         uint256 originalPrice,
         uint256 expirationDate
-    ) external;
+    ) external returns (uint256);
 
     // Mint with royalty receiver and bps (denominator 10000)
     function safeMintWithRoyalty(
@@ -26,7 +26,7 @@ interface IEventContract {
         uint256 expirationDate,
         address royaltyReceiver,
         uint96 royaltyBps
-    ) external;
+    ) external returns (uint256);
 
     // ------------ Validation & status ------------
     function validateTicket(uint256 tokenId) external;
@@ -34,6 +34,9 @@ interface IEventContract {
     function getTicketHistory(uint256 tokenId) external view returns (address[] memory);
 
     function getTicketStatus(uint256 tokenId) external view returns (bool isUsed, bool isValid);
+
+    // ERC-2981 royalty info required by Marketplace and tests
+    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address receiver, uint256 royaltyAmount);
 
     // ------------ Admin updates ------------
     function updateTicketMetadata(uint256 tokenId, string memory newEventDetails, string memory newURI) external;

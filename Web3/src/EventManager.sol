@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "./IEventContract.sol";
 import "./IEventManager.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title EventManager
@@ -77,7 +77,7 @@ contract EventManager is Ownable, IEventManager {
      * @param endDate The end date for the ticket's validity.
      * @return The address of the ticket holder.
      */
-    function mintTicket(uint256 eventId, address to, string memory uri, uint256 endDate) public override returns (address) {
+    function mintTicket(uint256 eventId, address to, string memory uri, uint256 endDate) public override returns (uint256) {
         require(eventId < eventIdCounter, "Event does not exist");
         require(eventRegistry[eventId].organizer == msg.sender, "Only organizer can mint");
         require(eventChainContract != address(0), "EventChainContract not set");
@@ -85,7 +85,7 @@ contract EventManager is Ownable, IEventManager {
 
         IEventContract chain = IEventContract(eventChainContract);
         // default royalty 100 bps = 1%
-        chain.safeMintWithRoyalty(
+        uint256 tokenId = chain.safeMintWithRoyalty(
             to,
             uri,
             eventRegistry[eventId].name,
@@ -94,8 +94,7 @@ contract EventManager is Ownable, IEventManager {
             msg.sender,
             100
         );
-        
-        return to; // Return the address
+        return tokenId;
     }
 
     /**
