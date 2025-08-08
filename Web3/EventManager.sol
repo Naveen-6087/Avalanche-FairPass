@@ -74,9 +74,10 @@ contract EventManager is Ownable, IEventManager {
      * @param eventId The ID of the event to mint tickets for.
      * @param to The address receiving the minted ticket.
      * @param uri The metadata URI associated with the ticket.
-     * @param endDate The end date for the ticket’s validity.
+     * @param endDate The end date for the ticket's validity.
+     * @return The address of the ticket holder.
      */
-    function mintTicket(uint256 eventId, address to, string memory uri, uint256 endDate) public override {
+    function mintTicket(uint256 eventId, address to, string memory uri, uint256 endDate) public override returns (address) {
         require(eventId < eventIdCounter, "Event does not exist");
         require(eventRegistry[eventId].organizer == msg.sender, "Only organizer can mint");
         require(eventChainContract != address(0), "EventChainContract not set");
@@ -93,6 +94,8 @@ contract EventManager is Ownable, IEventManager {
             msg.sender,
             100
         );
+        
+        return to; // Return the address
     }
 
     /**
