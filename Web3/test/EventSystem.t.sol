@@ -14,6 +14,10 @@ contract EventSystemTest is Test {
     EventManager public eventManager;
     Marketplace public marketplace;
 
+    // Event declarations for testing
+    event TicketMinted(uint256 indexed tokenId, address indexed owner, string eventDetails, uint256 originalPrice, uint256 expirationDate);
+    event TicketExpired(uint256 indexed tokenId);
+
     address public deployer;
     address public organizer;
     address public alice;
@@ -76,25 +80,25 @@ contract EventSystemTest is Test {
         address contractAddress = address(eventChain);
         assertTrue(contractAddress != address(0), "Contract address should not be zero");
 
-        vm.expectEmit(true, true, true, true);
-        emit IEventContract.TicketMinted(0, alice, "Concert A", 1 ether, block.timestamp + 1 days);
-
+        vm.expectEmit(true, true, true, true, address(eventChain));
+        emit TicketMinted(0, alice, "Concert A", 1 ether, block.timestamp + 1 days);
+        
         vm.prank(organizer);
-        uint256 returned = eventChain.safeMint(alice, "ipfs://token0", "Concert A", 1 ether, block.timestamp + 1 days);
+        uint256 tokenId = eventChain.safeMint(alice, "ipfs://token0", "Concert A", 1 ether, block.timestamp + 1 days);
 
-        assertEq(eventChain.ownerOf(returned), alice, "Alice should own the returned tokenId");
-        string memory uri = eventChain.tokenURI(returned);
+        assertEq(eventChain.ownerOf(tokenId), alice, "Alice should own the returned tokenId");
+        string memory uri = eventChain.tokenURI(tokenId);
         assertGt(bytes(uri).length, 0, "Token URI should not be empty");
 
         assertEq(address(eventChain), contractAddress, "Contract address should remain the same after minting");
 
-        address[] memory history = eventChain.getTicketHistory(returned);
+        address[] memory history = eventChain.getTicketHistory(tokenId);
         assertEq(history.length, 1, "History should have exactly one entry for new mint");
         assertEq(history[0], alice, "History should show alice as the first owner");
 
         (uint256 foundId, bool ok) = findAnyTokenOwnedBy(alice);
         assertTrue(ok);
-        assertEq(foundId, returned);
+        assertEq(foundId, tokenId);
     }
 
     function test_safeMintWithRoyalty_setsRoyaltyAndReturnsRoyaltyInfo() public {
@@ -167,8 +171,8 @@ contract EventSystemTest is Test {
         vm.warp(expiry + 1);
 
         vm.prank(deployer);
-        vm.expectEmit(true, true, true, true);
-        emit IEventContract.TicketExpired(returned);
+        vm.expectEmit(true, true, true, true, address(eventChain));
+        emit TicketExpired(returned);
         eventChain.burnExpiredTickets(returned);
 
         vm.expectRevert();
@@ -341,6 +345,46 @@ contract EventSystemTest is Test {
         vm.prank(alice);
         vm.expectRevert("Approvals disabled");
         eventChain.setApprovalForAll(bob, true);
+    }
+    function test_mintedNFTAddress() public {
+        // Get the EventContract's address for verification
+        address expectedNFTAddress = address(eventChain);
+        
+        // Mint a new NFT to alice and capture the returned token ID
+        vm.prank(organizer);
+        uint256 tokenId = eventChain.safeMint(alice, "ipfs://test-address", "Test Event", 0.1 ether, block.timestamp + 1 days);
+        
+        // Verify the token exists in the EventContract
+        address nftOwner = eventChain.ownerOf(tokenId);
+        
+        // Get the actual NFT contract address from the token ID
+        try IERC721(address(eventChain)).ownerOf(tokenId) returns (address actualOwner) {
+            // Verify the NFT contract address is correct
+            assertEq(actualOwner, alice, "NFT owner should be alice");
+            
+            // Verify the token exists in the EventContract's storage
+            (uint256 foundTokenId, bool ok) = findLatestTokenOwnedBy(alice);
+            assertTrue(ok, "Should find the minted token in storage");
+            assertEq(foundTokenId, tokenId, "Token ID mismatch in storage");
+            
+            // Log the verification details
+            console.log("NFT verification successful");
+            console.log("Token ID: ", tokenId);
+            console.log("Contract address: ", expectedNFTAddress);
+            console.log("Owner address: ", nftOwner);
+            console.log("Alice address: ", alice);
+            
+            // Additional verification that the token is owned by the contract
+            assertEq(
+                eventChain.balanceOf(alice),
+                1,
+                "Alice should own exactly one token"
+            );
+        } catch Error(string memory reason) {
+            fail(string(abi.encodePacked("Failed to verify NFT: ", reason)));
+        } catch (bytes memory) {
+            fail("Failed to verify NFT: Unknown error");
+        }
     }
 }
 

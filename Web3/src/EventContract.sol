@@ -205,11 +205,11 @@ contract EventContract is ERC721, ERC721URIStorage, ERC721Burnable, ERC2981, Own
         return super.royaltyInfo(tokenId, salePrice);
     }
 
-    function approve(address to, uint256 tokenId) public override(ERC721, IERC721) {
+    function approve(address /* to */, uint256 /* tokenId */) public pure override(ERC721, IERC721) {
         revert("Approvals disabled");
     }
 
-    function setApprovalForAll(address operator, bool approved) public override(ERC721, IERC721) {
+    function setApprovalForAll(address /* operator */, bool /* approved */) public pure override(ERC721, IERC721) {
         revert("Approvals disabled");
     } 
 }
