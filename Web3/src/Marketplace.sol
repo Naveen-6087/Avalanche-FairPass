@@ -4,6 +4,8 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "./IEventContract.sol";
 
@@ -11,7 +13,7 @@ import "./IEventContract.sol";
  * @title EventTicketMarketplace
  * @dev Marketplace for trading event ticket NFTs with royalty support
  */
-contract Marketplace is Ownable, ReentrancyGuard {
+contract Marketplace is Ownable, ReentrancyGuard, IERC721Receiver {
     
     // Marketplace fee in basis points (100 = 1%)
     uint256 public marketplaceFee = 250; // 2.5% default
@@ -95,9 +97,11 @@ contract Marketplace is Ownable, ReentrancyGuard {
         (address royaltyReceiver, uint256 royaltyAmount) = eventContract.royaltyInfo(listing.tokenId, listing.price);
         
         // Adjust seller amount if royalty is higher than marketplace fee
-        if (royaltyAmount > marketplaceFeeAmount) {
-            uint256 additionalRoyalty = royaltyAmount - marketplaceFeeAmount;
-            sellerAmount -= additionalRoyalty;
+        if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
+            if (royaltyAmount > marketplaceFeeAmount) {
+                uint256 additionalRoyalty = royaltyAmount - marketplaceFeeAmount;
+                sellerAmount -= additionalRoyalty;
+            }
         }
         
         // Transfer the token
@@ -109,7 +113,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
             require(sellerSent, "Failed to send payment to seller");
         }
         
-        if (royaltyAmount > 0) {
+        if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
             (bool royaltySent, ) = payable(royaltyReceiver).call{value: royaltyAmount}("");
             require(royaltySent, "Failed to send royalty");
         }
@@ -248,7 +252,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         require(listing.active, "Listing not active");
         
         marketplaceFeeAmount = (listing.price * marketplaceFee) / FEE_DENOMINATOR;
-        (address royaltyReceiver, uint256 royalty) = eventContract.royaltyInfo(listing.tokenId, listing.price);
+        (, uint256 royalty) = eventContract.royaltyInfo(listing.tokenId, listing.price);
         royaltyAmount = royalty;
         
         sellerAmount = listing.price - marketplaceFeeAmount;
@@ -258,6 +262,40 @@ contract Marketplace is Ownable, ReentrancyGuard {
         }
         
         return (marketplaceFeeAmount, royaltyAmount, sellerAmount);
+    }
+    
+    /**
+     * @dev See {IERC721Receiver-onERC721Received}.
+     */
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external pure override returns (bytes4) {
+        return this.onERC721Received.selector;
+    }
+    
+    /**
+     * @dev Rescue ERC20 tokens sent to the contract by mistake
+     * @param token The token contract address
+     * @param to The recipient address
+     * @param amount The amount to transfer
+     */
+    function rescueERC20(IERC20 token, address to, uint256 amount) external onlyOwner {
+        require(to != address(0), "Cannot send to zero address");
+        require(token.transfer(to, amount), "Transfer failed");
+    }
+
+    /**
+     * @dev Rescue ERC721 tokens sent to the contract by mistake
+     * @param token The token contract address
+     * @param to The recipient address
+     * @param tokenId The token ID to transfer
+     */
+    function rescueERC721(IERC721 token, address to, uint256 tokenId) external onlyOwner {
+        require(to != address(0), "Cannot send to zero address");
+        token.safeTransferFrom(address(this), to, tokenId);
     }
     
     // Required for receiving ETH
