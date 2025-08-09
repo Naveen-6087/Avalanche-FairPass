@@ -8,6 +8,7 @@ import {RainbowKitProvider,} from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import {avalancheFuji} from 'wagmi/chains';
 import {QueryClientProvider,QueryClient,} from "@tanstack/react-query";
+import { BrowserRouter } from 'react-router-dom';
 
 const queryClient = new QueryClient();
 
@@ -16,7 +17,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <WagmiProvider config={WagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider modalSize="compact" initialChain={avalancheFuji} coolMode = {true}>
-          <App/>
+          <BrowserRouter>
+            <App/>
+          </BrowserRouter>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
