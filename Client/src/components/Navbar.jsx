@@ -1,32 +1,23 @@
-import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Connect } from './connect';
-import { Ticket, LayoutDashboard, ScanLine, Plus, Home, Search, Shield } from 'lucide-react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export default function Navbar() {
-  const navClass = ({ isActive }) =>
-    `px-3 py-2 rounded-md text-sm font-medium ${isActive ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:text-white hover:bg-zinc-800'}`;
+  const linkBase = 'text-sm font-medium hover:text-white/90';
+  const active = ({ isActive }) => (isActive ? `${linkBase} text-white` : `${linkBase} text-white/70`);
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-zinc-800/60 bg-zinc-950/70 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2 text-white">
-          <Ticket className="h-5 w-5 text-blue-500" />
-          <span className="font-semibold">FairPass</span>
-        </Link>
-        <nav className="hidden md:flex items-center gap-1">
-          <NavLink to="/" className={navClass}><Home className="h-4 w-4 inline mr-1"/>Home</NavLink>
-          <NavLink to="/events" className={navClass}><Search className="h-4 w-4 inline mr-1"/>Browse</NavLink>
-          <NavLink to="/organizer" className={navClass}><LayoutDashboard className="h-4 w-4 inline mr-1"/>Organizer</NavLink>
-          <NavLink to="/attendee" className={navClass}><LayoutDashboard className="h-4 w-4 inline mr-1"/>Attendee</NavLink>
-          <NavLink to="/admin" className={navClass}><Shield className="h-4 w-4 inline mr-1"/>Admin</NavLink>
-          <NavLink to="/scan" className={navClass}><ScanLine className="h-4 w-4 inline mr-1"/>Scan</NavLink>
-          <NavLink to="/create" className={navClass}><Plus className="h-4 w-4 inline mr-1"/>Create</NavLink>
+    <header className="sticky top-0 z-40 w-full border-b border-white/10 backdrop-blur bg-black/40">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+        <Link to="/" className="text-white font-semibold">FairPass</Link>
+        <nav className="flex items-center gap-6">
+          <NavLink to="/create" className={active}>Create Event</NavLink>
+          <NavLink to="/events" className={active}>My Events</NavLink>
+          <NavLink to="/marketplace" className={active}>Marketplace</NavLink>
+          <ConnectButton chainStatus="icon" showBalance={false} />
         </nav>
-        <div className="flex items-center gap-2">
-          <Connect />
-        </div>
       </div>
     </header>
   );
 }
+
+
