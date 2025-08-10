@@ -14,6 +14,11 @@ export const EVENT_CONTRACT = "0x8E5f15BF15D32b65aaA68A65e0ABC9f69e761058"; // 0
 export const EVENT_MANAGER = "0xbe502F003450F1c5F8cEB06f1BBB99beA293F93F"; // 0x12337866dA4d6f349D63F960f571f2afb3933309
 export const MARKETPLACE = "0xc147Ab09Ea8e7edfba1993730Ef2ef5625Ed8276";  // 0x09BCAE10A7612f90f7f7599995B10921663b1DcA
 
+// Export with ADDRESS suffix for consistency with connections.js
+export const EVENT_CONTRACT_ADDRESS = EVENT_CONTRACT;
+export const EVENT_MANAGER_ADDRESS = EVENT_MANAGER;
+export const MARKETPLACE_ADDRESS = MARKETPLACE;
+
 // ABIs of the 3 contracts
 //EventContract
 export const EVENT_CONTRACT_ABI = [
@@ -915,7 +920,8 @@ export const EVENT_CONTRACT_ABI = [
 		"type": "function"
 	}
 ]
-//EventManager
+
+//EventManager - Updated to include metadataURI parameter
 export const EVENT_MANAGER_ABI = [
 	{
 		"inputs": [
@@ -938,6 +944,11 @@ export const EVENT_MANAGER_ABI = [
 				"internalType": "uint256",
 				"name": "ticketPrice",
 				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "metadataURI",
+				"type": "string"
 			}
 		],
 		"name": "createEvent",
@@ -993,6 +1004,12 @@ export const EVENT_MANAGER_ABI = [
 				"internalType": "uint256",
 				"name": "ticketPrice",
 				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "metadataURI",
+				"type": "string"
 			},
 			{
 				"indexed": false,
@@ -1166,6 +1183,11 @@ export const EVENT_MANAGER_ABI = [
 						"type": "uint256"
 					},
 					{
+						"internalType": "string",
+						"name": "metadataURI",
+						"type": "string"
+					},
+					{
 						"internalType": "address",
 						"name": "organizer",
 						"type": "address"
@@ -1193,8 +1215,42 @@ export const EVENT_MANAGER_ABI = [
 		"type": "function"
 	}
 ]
-//Marketplace
+
+//Marketplace - Updated to include metadataURI parameter
 export const MARKETPLACE_ABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "location",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "date",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "ticketPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "metadataURI",
+				"type": "string"
+			}
+		],
+		"name": "createEvent",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
 	{
 		"inputs": [
 			{
@@ -1246,6 +1302,12 @@ export const MARKETPLACE_ABI = [
 			},
 			{
 				"indexed": false,
+				"internalType": "string",
+				"name": "metadataURI",
+				"type": "string"
+			},
+			{
+				"indexed": false,
 				"internalType": "address",
 				"name": "organizer",
 				"type": "address"
@@ -1280,99 +1342,6 @@ export const MARKETPLACE_ABI = [
 		"type": "event"
 	},
 	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "previousOwner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "newOwner",
-				"type": "address"
-			}
-		],
-		"name": "OwnershipTransferred",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "location",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "date",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "ticketPrice",
-				"type": "uint256"
-			}
-		],
-		"name": "createEvent",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "eventId",
-				"type": "uint256"
-			}
-		],
-		"name": "getEventDetails",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "string",
-						"name": "name",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "location",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "date",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "ticketPrice",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "organizer",
-						"type": "address"
-					}
-				],
-				"internalType": "struct IEventManager.Event",
-				"name": "",
-				"type": "tuple"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "uint256",
@@ -1405,6 +1374,25 @@ export const MARKETPLACE_ABI = [
 		],
 		"stateMutability": "nonpayable",
 		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
 	},
 	{
 		"inputs": [],
